@@ -19,7 +19,8 @@ class KdeBuilder:
     def create_plot(self, file, x_label=None, y_label='Высота, км'):
         ax = sb.kdeplot(self.obs_dataset.value, self.obs_dataset.h,
                         kernel="gau", cmap="Reds", shade=True, shade_lowest=False)
-        plt.xlim(200, 300)
+        if self.param == 'Temperature':
+            plt.xlim(200, 300)
         plt.ylim(50, 90)
         if x_label:
             ax.set_xlabel(x_label)
