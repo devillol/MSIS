@@ -7,18 +7,21 @@ import numpy as np
 
 def create_dataset(mat_file):
     source_data = scipy.io.loadmat(mat_file)
+    t_names = [f'Temperature{i}' for i in range(50, 95, 5)]
+    m_names = [f'M{i}' for i in range(50, 95, 5)]
+
     T = pd.DataFrame(source_data['Temperature'],
-                     columns=["T50", "T55", "T60", "T65", "T70", "T75", "T80", "T85", "T90"])
+                     columns=t_names)
     P = pd.DataFrame(source_data['Pressure'],
-                     columns=["P50", "P55", "P60", "P65", "P70", "P75", "P80", "P85", "P90"])
+                     columns=m_names)
     conditions = pd.DataFrame(source_data['Conditions'],
                               columns=['year', 'month', 'day', 'hh', 'mm', 'shirota', 'dolg', 'SZA', 'F107', 'Ap'])
 
     summary = conditions.join(T).join(P).dropna()
 
     for i in range(50, 95, 5):
-        summary['P{}'.format(str(i))] = np.log(
-            summary['P{}'.format(str(i))] / (summary['T{}'.format(str(i))] * cs.k) * 10 ** (-6) \
+        summary['M{}'.format(str(i))] = np.log(
+            summary['M{}'.format(str(i))] / (summary['M{}'.format(str(i))] * cs.k) * 10 ** (-6) \
             * 10 ** (-14))
 
     query = '''
@@ -44,9 +47,12 @@ def create_dataset(mat_file):
         when SZA > 100 then 'ночь'
         else 'сумерки'
     end SZA
-    ,T50, T55, T60, T65, T70, T75, T80, T85, T90
-    ,P50 as N50, P55  as N55, P60 as N60, P65 as N65 
-    ,P70 as N70, P75 as N75, P80 as N80, P85 as N85, P90 as N90
+    '''
+    for t in t_names:
+        query = query + f', {t}'
+    for m in m_names:
+        query = query + f', {m}'
+    query = query + '''
     from summary
     where
          F107 is not null
