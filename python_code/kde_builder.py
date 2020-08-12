@@ -35,7 +35,7 @@ class KdeBuilder:
         colors = ['g', 'b', 'm', 'y', 'aqua', 'orange', 'midnightblue', 'lime', 'olive']
 
         # до какого знака округляем mean и std
-        n = 0 if self.param == 'Temperature' else 4
+        n = 1 if self.param == 'Temperature' else 4
 
         means = self.dataset.mean()
         stds = self.dataset.std()
