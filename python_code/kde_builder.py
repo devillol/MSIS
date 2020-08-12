@@ -43,7 +43,7 @@ class KdeBuilder:
         std = getattr(stds, f'{self.param}50')
 
         plt.axvline(x=mean, ymin=0, ymax=0.03125,
-                    label=f' mean={round(mean, n)}\n std={round(std, n)}', color=colors[0])
+                    label=f'h={50}\n mean={round(mean, n)}\n std={round(std, n)}', color=colors[0])
         plt.axvline(x=mean - std, ymin=0, ymax=0.03125, color=colors[0], linestyle='--')
         plt.axvline(x=mean + std, ymin=0, ymax=0.03125, color=colors[0], linestyle='--')
         for i in range(7):
@@ -51,7 +51,7 @@ class KdeBuilder:
             std = getattr(stds, f'{self.param}{55 + (5 * i)}')
 
             plt.axvline(mean, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)),
-                        label=f'mean={round(mean, n)}\n std={round(std, n)}', color=colors[i + 1])
+                        label=f'h={55 + (5 * i)}\n mean={round(mean, n)}\n std={round(std, n)}', color=colors[i + 1])
             plt.axvline(mean - std, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)),
                         color=colors[i + 1], linestyle='--')
             plt.axvline(mean + std, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)),
@@ -60,7 +60,7 @@ class KdeBuilder:
         mean = getattr(means, f'{self.param}90')
         std = getattr(stds, f'{self.param}90')
         plt.axvline(x=mean, ymin=0.96875, ymax=1,
-                    label=f' mean={round(mean, n)}\n std={round(std, n)}', color=colors[8])
+                    label=f'h=90\n mean={round(mean, n)}\n std={round(std, n)}', color=colors[8])
         plt.axvline(x=mean - std, ymin=0.96875, ymax=1, color=colors[8], linestyle='--')
         plt.axvline(x=mean + std, ymin=0.96875, ymax=1, color=colors[8], linestyle='--')
         plt.legend(loc='center left', bbox_to_anchor=(1.4, 0.5))
