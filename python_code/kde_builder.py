@@ -22,6 +22,7 @@ class KdeBuilder:
         if self.param == 'Temperature':
             plt.xlim(200, 300)
         plt.ylim(50, 90)
+        plt.title(f'{self.param} for {self.filter_expr} \n {len(self.dataset.index)} observations')
         if x_label:
             ax.set_xlabel(x_label)
         else:
@@ -30,25 +31,34 @@ class KdeBuilder:
                               'M': 'Ln(M) * 10^14 см^(-3)'
                           }[self.param])
         ax.set_ylabel(y_label)
+
+        colors = ['g', 'b', 'm', 'y', 'aqua', 'orange', 'midnightblue', 'lime', 'olive']
+
         means = self.dataset.mean()
         stds = self.dataset.std()
         mean = getattr(means, f'{self.param}50')
         std = getattr(stds, f'{self.param}50')
 
-        plt.axvline(x=mean, ymin=0, ymax=0.03125)
-        plt.axvline(x=mean - std, ymin=0, ymax=0.03125, linestyle='--')
-        plt.axvline(x=mean + std, ymin=0, ymax=0.03125, linestyle='--')
+        plt.axvline(x=mean, ymin=0, ymax=0.03125,
+                    label=f' mean={round(mean)}\n std={round(std)}', color=colors[0])
+        plt.axvline(x=mean - std, ymin=0, ymax=0.03125, color=colors[0], linestyle='--')
+        plt.axvline(x=mean + std, ymin=0, ymax=0.03125, color=colors[0], linestyle='--')
         for i in range(7):
             mean = getattr(means, f'{self.param}{55 + (5 * i)}')
             std = getattr(stds, f'{self.param}{55 + (5 * i)}')
 
-            plt.axvline(mean, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)))
-            plt.axvline(mean - std, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)), linestyle='--')
-            plt.axvline(mean + std, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)), linestyle='--')
+            plt.axvline(mean, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)),
+                        label=f'mean={round(mean)}\n std={round(std)}', color=colors[i + 1])
+            plt.axvline(mean - std, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)),
+                        color=colors[i + 1], linestyle='--')
+            plt.axvline(mean + std, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)),
+                        color=colors[i + 1], linestyle='--')
 
         mean = getattr(means, f'{self.param}90')
         std = getattr(stds, f'{self.param}90')
-        plt.axvline(x=mean, ymin=0.96875, ymax=1)
-        plt.axvline(x=mean - std, ymin=0.96875, ymax=1, linestyle='--')
-        plt.axvline(x=mean + std, ymin=0.96875, ymax=1, linestyle='--')
-        plt.savefig(file)
+        plt.axvline(x=mean, ymin=0.96875, ymax=1,
+                    label=f' mean={round(mean)}\n std={round(std)}', color=colors[8])
+        plt.axvline(x=mean - std, ymin=0.96875, ymax=1, color=colors[8], linestyle='--')
+        plt.axvline(x=mean + std, ymin=0.96875, ymax=1, color=colors[8], linestyle='--')
+        plt.legend(loc='center left', bbox_to_anchor=(1.4, 0.5))
+        plt.savefig(file, bbox_inches="tight")
