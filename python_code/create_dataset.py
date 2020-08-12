@@ -38,7 +38,7 @@ def create_dataset(mat_file):
           when abs(shirota) < 30 then 'экваториальные'
          else 'средние'
     end region
-    , case when F107 < 110 then 'низкая солнечная активность'
+    , case when F107 < 100 then 'низкая солнечная активность'
         when F107 > 150 then 'высокая солнечная активность'
         else 'средняя солнечная активность'
     end F107
