@@ -20,9 +20,8 @@ def create_dataset(mat_file):
     summary = conditions.join(T).join(P).dropna()
 
     for i in range(50, 95, 5):
-        summary['M{}'.format(str(i))] = np.log(
-            summary['M{}'.format(str(i))] / (summary['M{}'.format(str(i))] * cs.k) * 10 ** (-6) \
-            * 10 ** (-14))
+        summary[f'M{i}'] = np.log(
+            summary[f'M{i}'] / (summary[f'Temperature{i}'] * cs.k) * 10 ** (-6) * 10 ** (-14))
 
     query = '''
     select 
