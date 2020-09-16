@@ -8,8 +8,10 @@ from python_code.kde_builder import KdeBuilder
 @click.option('--region')
 @click.option('--sza')
 @click.option('--f107')
-# "season='зима' and region='полярные' and SZA='день' and F107='низкая солнечная активность'"
 def main(param, **kwargs):
+    """
+    cli-утилита для запуска кода
+    """
     if param.upper() in ['T', 'TEMPERATURE']:
         param = 'Temperature'
     else:
