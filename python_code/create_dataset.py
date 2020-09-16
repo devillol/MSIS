@@ -1,29 +1,39 @@
 import scipy.constants as cs
 import scipy.io
-import pandas as pd
+from pandas import DataFrame
 import pandasql as ps
 import numpy as np
+from jinja2 import Template
 
 
-def create_dataset(mat_file):
+def create_dataset(mat_file: str, param: str, filter_expr='1 = 1') -> DataFrame:
+    """
+    Функция, генерирующая из .mat-файла датафрэйм для параметра, отбирая записи по условию
+    :param mat_file: путь к .mat файлу
+    :param param: какой параметр считаем (Temperature или M)
+    :param filter_expr: условие
+    :return: DataFrame
+    """
     source_data = scipy.io.loadmat(mat_file)
     t_names = [f'Temperature{i}' for i in range(50, 95, 5)]
     m_names = [f'M{i}' for i in range(50, 95, 5)]
 
-    T = pd.DataFrame(source_data['Temperature'],
-                     columns=t_names)
-    P = pd.DataFrame(source_data['Pressure'],
-                     columns=m_names)
-    conditions = pd.DataFrame(source_data['Conditions'],
-                              columns=['year', 'month', 'day', 'hh', 'mm', 'shirota', 'dolg', 'SZA', 'F107', 'Ap'])
+    T = DataFrame(source_data['Temperature'],
+                  columns=t_names)
+    P = DataFrame(source_data['Pressure'],
+                  columns=m_names)
+    conditions = DataFrame(source_data['Conditions'],
+                           columns=['year', 'month', 'day', 'hh', 'mm', 'shirota', 'dolg', 'SZA', 'F107', 'Ap'])
 
-    summary = conditions.join(T).join(P).dropna()
+    summary = conditions.join(T).dropna() if param == 'Temperature' else conditions.join(T).join(P).dropna()
 
-    for i in range(50, 95, 5):
-        summary[f'M{i}'] = np.log(
-            summary[f'M{i}'] / (summary[f'Temperature{i}'] * cs.k) * 10 ** (-6) * 10 ** (-14))
+    if param == 'M':
+        for i in range(50, 95, 5):
+            summary[f'M{i}'] = np.log(
+                summary[f'M{i}'] / (summary[f'Temperature{i}'] * cs.k) * 10 ** (-6) * 10 ** (-14))
 
-    query = '''
+    query = Template('''
+    select * from (
     select 
     case when month in (11, 12, 1) and shirota > 0 
             or month in (5, 6, 7) and shirota < 0 then 'зима'
@@ -38,25 +48,19 @@ def create_dataset(mat_file):
           when abs(shirota) < 30 then 'экваториальные'
          else 'средние'
     end region
-    , case when F107 < 100 then 'низкая солнечная активность'
-        when F107 > 150 then 'высокая солнечная активность'
-        else 'средняя солнечная активность'
+    , case when F107 < 100 then 'низкаяСА'
+        when F107 > 150 then 'высокаяСА'
+        else 'средняяСА'
     end F107
     , case when SZA < 60 then 'день'
         when SZA > 100 then 'ночь'
         else 'сумерки'
     end SZA
-    '''
-    for t in t_names:
-        query = query + f', {t}'
-    for m in m_names:
-        query = query + f', {m}'
-    query = query + '''
+    {%- for col_name in column_names %}
+    , {{col_name}}
+    {%- endfor %}
     from summary
-    where
-         F107 is not null
-        and SZA is not null
-        and shirota is not null
-        and month is not null
-    '''
+    ) t where {{filter_query}}
+    ''').render(column_names=t_names if param == 'Temperature' else m_names,
+                filter_query=filter_expr)
     return ps.sqldf(query, locals())
