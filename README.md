@@ -118,6 +118,10 @@ $ python3 cli.py T --season лето --region полярные --sza день --
 $ python3 cli.py M --season зима --region средние
 ```
 
+**График сохраняется в директории `images` c названием**
+```python 
+f'images/{param}-{"-".join([value for value in kwargs.values() if value])}.png'
+```
 ## Исходные данные
 Наблюдения со спутника AURA лежат в файле `data/data.mat`
 
