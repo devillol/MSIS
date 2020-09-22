@@ -1,5 +1,123 @@
 # Моделирование нижней геосферы земли
 Босинзон Галина, 734 группа
+## Код
+Основной код, используемый для выполнения проекта, лежит в директории `python_code`
+
+### Функция create_dataset
+```python
+def create_dataset(mat_file: str, param: str, filter_expr='1 = 1') -> DataFrame:
+    """
+    Функция, генерирующая из .mat-файла датафрэйм для параметра, отбирая записи по условию
+    :param mat_file: путь к .mat файлу
+    :param param: какой параметр считаем (Temperature или M)
+    :param filter_expr: условие
+    :return: DataFrame
+    """
+```
+Функция создает датасет из `.mat`-файла, в котором сырые данные файла пересчитаны
+в нужные значения `season`, `region`, `SZA` и `F107`. 
+На выходе датасет дополнен значениями температуры или концентрации нейтралов (в
+зависимости от переданного значения `param`), а также отобраны только нужные записи
+с помощью фильтра `filter_expr`
+
+Расчет значений `season`, `region`, `SZA` и `F107` и фильтрация производятся
+с помощью sql-запроса:
+
+```sql
+    select * from (
+    select 
+    case when month in (11, 12, 1) and shirota > 0 
+            or month in (5, 6, 7) and shirota < 0 then 'зима'
+        when month in (2, 3, 4) and shirota > 0
+            or month in (8, 9, 10) and shirota < 0 then 'весна'
+        when month in (5, 6, 7) and shirota > 0 
+            or month in (11, 12, 1) and shirota < 0 then 'лето'
+        when month in (8, 9, 10) and shirota > 0
+            or month in (2, 3, 4) and shirota < 0 then 'осень'
+    end season
+    , case when abs(shirota) > 60 then 'полярные'
+          when abs(shirota) < 30 then 'экваториальные'
+         else 'средние'
+    end region
+    , case when F107 < 100 then 'низкаяСА'
+        when F107 > 150 then 'высокаяСА'
+        else 'средняяСА'
+    end F107
+    , case when SZA < 60 then 'день'
+        when SZA > 100 then 'ночь'
+        else 'сумерки'
+    end SZA
+    {%- for col_name in column_names %}
+    , {{col_name}}
+    {%- endfor %}
+    from summary
+    ) t where {{filter_query}}
+```
+
+### Класс KdeBuilder
+
+```python
+class KdeBuilder:
+    """
+    Класс для визуализации данных
+    """
+
+    def __init__(self, mat_file, param, **kwargs):
+```
+При инициализации передаются параметры:
+* `mat_file` - путь к файлу с исходными данными
+* `param` - что рассчитываем (`Temperature` или `M`)
+* `**kwargs` - значения `season`, `region`, `SZA` и `F107` , если по ним нужен отбор
+
+Во время инициализации создается датасет из файла.
+
+Для построения графика необходимо вызвать метод `create_plot`
+
+```python
+    def create_plot(self, file, x_label=None, y_label='Высота, км'):
+        """
+        Метод, строящий график
+        :param file: куда сохранять файл
+        :param x_label: подпись оси x
+        :param y_label: подпись оси y
+        :return:
+        """
+```
+
+### Утилита cli.py
+Сделана для удобства вызова построения графиков
+
+Вызывается с опциями, соответствующими критериям фильтра.
+
+```sh
+usage: cli.py [OPTIONS] PARAM
+```
+
+`PARAM` - `T` или `M` в зависимости от того, что мы хотим рассчитать
+
+`OPTIONS`:
+
+|Опция| возможные значения |
+|-----|------|
+|--season|лето, зима, осень, весна|
+|--region|экваториальные, средние, полярные|
+|--sza|день, ночь, сумерки|
+|--f107|низкаяСА, высокаяСА, средняяСА|
+ 
+_Примеры:_
+
+* Построеение графика плотности вероятности температуры нейтралов летом в полярных широтных, днем, при низкой солнечной активности
+
+```sh 
+$ python3 cli.py T --season лето --region полярные --sza день --f107 низкаяСА
+```
+
+* Построение графика плотности вероятности концентрации нейтралов зимой в средних широтах (для всех времен суток и СА):
+
+```shell 
+$ python3 cli.py M --season зима --region средние
+```
+
 ## Исходные данные
 Наблюдения со спутника AURA лежат в файле `data/data.mat`
 
