@@ -111,7 +111,7 @@ class KdeBuilder:
         fig.set_size_inches(20, 10)
         fig.suptitle(
             f'{self.__param} \n {self.__options} \n {self.obs_count} observations'
-            if not plt_tittle else f'{plt_tittle} \n {self.obs_count} observations')
+            if not plt_tittle else f'{plt_tittle} \n {self.obs_count} observations', fontsize=20)
 
         sb.heatmap(normed_data, cmap="viridis", ax=ax[0])
         ax[0].invert_yaxis()
@@ -139,7 +139,7 @@ class KdeBuilder:
         plt.grid()
         plt.legend()
 
-        plt.savefig(image_file)
+        plt.savefig(image_file,bbox_inches='tight', dpi=100)
         plt.close()
 
     def __add_avg_std(self):
