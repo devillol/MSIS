@@ -30,11 +30,8 @@ class KdeBuilder:
         Метод, герирующий датафрэйм из строчек высота-параметр
         :return:
         """
-        _SQL_FILES_BY_PARAM = {'h': f'{Path(__file__).parent.parent.absolute()}/sql/grouped.sql',
-                               'latitude': f'{Path(__file__).parent.parent.absolute()}/sql/by_latitude.sql',
-                               'month': f'{Path(__file__).parent.parent.absolute()}/sql/by_months.sql'}
         df = create_dataset(mat_file=self.__mat_file, param=self.__param,
-                            sql_file_path=_SQL_FILES_BY_PARAM[y_param],
+                            sql_file_path=f'{Path(__file__).parent.parent.absolute()}/sql/by_{y_param}.sql',
                             filter_expr=self.__filter_expr)
 
         logging.info(df)
@@ -126,7 +123,9 @@ class KdeBuilder:
         _Y_NAMES_BY_PARAM = {
             'h': 'Высота, км',
             'latitude': 'Широта, deg',
-            'month': 'Месяц'
+            'month': 'Месяц',
+            'sza': 'Зенитный угол, deg',
+            'f107': 'f107'
         }
         ax[0].set_xlabel(_VAL_NAMES_BY_PARAM[self.__param[0]] if not x_label else x_label)
         ax[0].set_ylabel(_Y_NAMES_BY_PARAM[y_param] if not y_label else y_label)
@@ -142,37 +141,3 @@ class KdeBuilder:
         plt.savefig(image_file,bbox_inches='tight', dpi=100)
         plt.close()
 
-    def __add_avg_std(self):
-        # разные цвета, чтобы различать легенды
-        colors = ['g', 'b', 'm', 'y', 'aqua', 'orange', 'midnightblue', 'lime', 'olive']
-
-        # до какого знака округляем mean и std
-        n = 1 if self.__param == 'Temperature' else 4
-
-        # для каждой высоты (с шагом 5 км) считаем mean и std
-        means = self.means
-        stds = self.stds
-        mean = getattr(means, f'{self.__param}50')
-        std = getattr(stds, f'{self.__param}50')
-
-        plt.axvline(x=mean, ymin=0, ymax=0.03125,
-                    label=f'h={50}\n mean={round(mean, n)}\n std={round(std, n)}', color=colors[0])
-        plt.axvline(x=mean - std, ymin=0, ymax=0.03125, color=colors[0], linestyle='--')
-        plt.axvline(x=mean + std, ymin=0, ymax=0.03125, color=colors[0], linestyle='--')
-        for i in range(7):
-            mean = getattr(means, f'{self.__param}{55 + (5 * i)}')
-            std = getattr(stds, f'{self.__param}{55 + (5 * i)}')
-
-            plt.axvline(mean, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)),
-                        label=f'h={55 + (5 * i)}\n mean={round(mean, n)}\n std={round(std, n)}', color=colors[i + 1])
-            plt.axvline(mean - std, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)),
-                        color=colors[i + 1], linestyle='--')
-            plt.axvline(mean + std, ymin=0.03125 + (0.125 * i), ymax=0.03125 + (0.125 * (i + 1)),
-                        color=colors[i + 1], linestyle='--')
-
-        mean = getattr(means, f'{self.__param}90')
-        std = getattr(stds, f'{self.__param}90')
-        plt.axvline(x=mean, ymin=0.96875, ymax=1,
-                    label=f'h=90\n mean={round(mean, n)}\n std={round(std, n)}', color=colors[8])
-        plt.axvline(x=mean - std, ymin=0.96875, ymax=1, color=colors[8], linestyle='--')
-        plt.axvline(x=mean + std, ymin=0.96875, ymax=1, color=colors[8], linestyle='--')
