@@ -3,64 +3,53 @@ import scipy.io
 from pandas import DataFrame
 import pandasql as ps
 import numpy as np
+import re
+import logging
 from jinja2 import Template
 
 
-def create_dataset(mat_file: str, param: str, filter_expr='1 = 1') -> DataFrame:
+def check_param(param: str):
+    pattern = re.compile('[T,M](([5-8][05])|(90))?$')
+    if not pattern.match(param):
+        logging.error(f'UNKNOWN PARAM {param}')
+        exit(100)
+
+
+def create_dataset(mat_file: str, param: str, sql_file_path: str, **kwargs) -> DataFrame:
     """
     Функция, генерирующая из .mat-файла датафрэйм для параметра, отбирая записи по условию
+    :param sql_file_path:
     :param mat_file: путь к .mat файлу
     :param param: какой параметр считаем (Temperature или M)
-    :param filter_expr: условие
     :return: DataFrame
     """
+    check_param(param)
+
+    _T_NAMES = [f'T{i}' for i in range(50, 95, 5)]
+    _M_NAMES = [f'M{i}' for i in range(50, 95, 5)]
+    _CONDITIONS = ['year', 'month', 'day', 'hh', 'mm', 'latitude', 'longitude', 'SZA', 'F107', 'Ap']
+
     source_data = scipy.io.loadmat(mat_file)
-    t_names = [f'Temperature{i}' for i in range(50, 95, 5)]
-    m_names = [f'M{i}' for i in range(50, 95, 5)]
+    column_names = locals()[f'_{param}_NAMES'].copy() if len(param) == 1 else [param]
+    logging.info(column_names)
 
-    T = DataFrame(source_data['Temperature'],
-                  columns=t_names)
-    P = DataFrame(source_data['Pressure'],
-                  columns=m_names)
-    conditions = DataFrame(source_data['Conditions'],
-                           columns=['year', 'month', 'day', 'hh', 'mm', 'shirota', 'dolg', 'SZA', 'F107', 'Ap'])
+    T = DataFrame(source_data['Temperature'], columns=_T_NAMES)
+    P = DataFrame(source_data['Pressure'], columns=_M_NAMES)
+    conditions = DataFrame(source_data['Conditions'], columns=_CONDITIONS)
 
-    summary = conditions.join(T).dropna() if param == 'Temperature' else conditions.join(T).join(P).dropna()
+    summary = conditions.join(T).dropna()
+    logging.info(summary)
 
-    if param == 'M':
-        for i in range(50, 95, 5):
-            summary[f'M{i}'] = np.log(
-                summary[f'M{i}'] / (summary[f'Temperature{i}'] * cs.k) * 10 ** (-6) * 10 ** (-14))
+    if param[0] == 'M':
+        summary = summary.join(P).dropna()
+        logging.info(summary)
+        for t, m in zip(_T_NAMES, _M_NAMES):
+            summary[m] = np.log(
+                summary[m] / (summary[t] * cs.k) * 10 ** (-6) * 10 ** (-14))
+        logging.info(summary)
 
-    query = Template('''
-    select * from (
-    select 
-    case when month in (11, 12, 1) and shirota > 0 
-            or month in (5, 6, 7) and shirota < 0 then 'зима'
-        when month in (2, 3, 4) and shirota > 0
-            or month in (8, 9, 10) and shirota < 0 then 'весна'
-        when month in (5, 6, 7) and shirota > 0 
-            or month in (11, 12, 1) and shirota < 0 then 'лето'
-        when month in (8, 9, 10) and shirota > 0
-            or month in (2, 3, 4) and shirota < 0 then 'осень'
-    end season
-    , case when abs(shirota) > 60 then 'полярные'
-          when abs(shirota) < 30 then 'экваториальные'
-         else 'средние'
-    end region
-    , case when F107 < 100 then 'низкаяСА'
-        when F107 > 150 then 'высокаяСА'
-        else 'средняяСА'
-    end F107
-    , case when SZA < 60 then 'день'
-        when SZA > 100 then 'ночь'
-        else 'сумерки'
-    end SZA
-    {%- for col_name in column_names %}
-    , {{col_name}}
-    {%- endfor %}
-    from summary
-    ) t where {{filter_query}}
-    ''').render(column_names=t_names if param == 'Temperature' else m_names,
-                filter_query=filter_expr)
-    return ps.sqldf(query, locals())
+    with open(sql_file_path, 'r') as sql_file:
+        __query = Template(sql_file.read()).render(column_names=column_names,
+                                                   n_round=0 if param[0] == 'T' else 2,
+                                                   **kwargs)
+        return ps.sqldf(__query, locals())
