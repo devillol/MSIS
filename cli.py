@@ -1,8 +1,8 @@
 import click
 from python_code.kde_builder import KdeBuilder
-from python_code.create_dataset import check_param
 from pathlib import Path
 import logging
+
 
 @click.command()
 @click.argument('param')
@@ -21,7 +21,7 @@ def main(param, log_level, y_param, **kwargs):
 
     kde_builder = KdeBuilder(mat_file='data/data.mat', param=param, **kwargs)
 
-    image_name = f'{Path(__file__).parent.absolute()}/images/by_{y_param}/{param}-'\
+    image_name = f'{Path(__file__).parent.absolute()}/images/by_{y_param}/{param}-' \
                  f'{"-".join([value for value in kwargs.values() if value])}.png'
     kde_builder.create_heatmap(image_name, y_param=y_param, add_avg_std=(y_param == 'h'))
     print(f'count of observations: {kde_builder.obs_count}')

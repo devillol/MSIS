@@ -132,12 +132,9 @@ class KdeBuilder:
         ax[1].set_xlabel(_Y_NAMES_BY_PARAM[y_param] if not y_label else y_label)
         ax[1].set_ylabel(_VAL_NAMES_BY_PARAM[self.__param[0]] if not x_label else x_label)
 
-        """
-        if y_param == 'h' and add_avg_std:
-            self.__add_avg_std()"""
         plt.grid()
         plt.legend()
 
-        plt.savefig(image_file,bbox_inches='tight', dpi=100)
+        plt.savefig(image_file, bbox_inches='tight', dpi=100)
         plt.close()
 
