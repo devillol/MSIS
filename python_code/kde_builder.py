@@ -107,7 +107,8 @@ class KdeBuilder:
             'width_ratios': [2, 1]})
         fig.set_size_inches(20, 10)
 
-        __param_tittle = f'{self.__param[0]} на высоте h = {self.__param[1:]} км'
+        __param_tittle = f'{self.__param[0]} на высоте h = {self.__param[1:]} км' if len(self.__param[0]) > 1 else self.__param
+
         fig.suptitle(f'{__param_tittle} \n {self.__options} \n {self.obs_count} observations'
                      if not plt_tittle else f'{plt_tittle} \n {self.obs_count} observations', fontsize=20)
 
