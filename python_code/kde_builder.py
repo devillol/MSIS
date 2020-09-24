@@ -106,9 +106,10 @@ class KdeBuilder:
         fig, ax = plt.subplots(1, 2, gridspec_kw={
             'width_ratios': [2, 1]})
         fig.set_size_inches(20, 10)
-        fig.suptitle(
-            f'{self.__param} \n {self.__options} \n {self.obs_count} observations'
-            if not plt_tittle else f'{plt_tittle} \n {self.obs_count} observations', fontsize=20)
+
+        __param_tittle = f'{self.__param[0]} на высоте h = {self.__param[1:]} км'
+        fig.suptitle(f'{__param_tittle} \n {self.__options} \n {self.obs_count} observations'
+                     if not plt_tittle else f'{plt_tittle} \n {self.obs_count} observations', fontsize=20)
 
         sb.heatmap(normed_data, cmap="viridis", ax=ax[0])
         ax[0].invert_yaxis()
@@ -137,4 +138,3 @@ class KdeBuilder:
 
         plt.savefig(image_file, bbox_inches='tight', dpi=100)
         plt.close()
-
