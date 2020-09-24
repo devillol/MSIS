@@ -14,5 +14,6 @@ select y, value from (
         else 'сумерки'
     end SZA , round({{column_names[0]}}, {{n_round}}) as value
     from summary
+    where latitude > 0
 ) t
 where {{filter_expr}}
