@@ -1,10 +1,24 @@
 import pandasql as ps
+import pandas as pd
+import numpy as np
 from pandas import DataFrame
 import seaborn as sb
 import matplotlib.pyplot as plt
 from python_code.create_dataset import create_dataset
 from pathlib import Path
 import logging
+
+_VAL_NAMES_BY_PARAM = {
+    'T': 'Temperature, K',
+    'M': 'Ln(M) * 10^14 см^(-3)'
+}
+_Y_NAMES_BY_PARAM = {
+    'h': 'Высота, км',
+    'latitude': 'Широта, deg',
+    'month': 'Месяц',
+    'sza': 'Зенитный угол, deg',
+    'f107': 'f107'
+}
 
 
 class KdeBuilder:
@@ -61,8 +75,7 @@ class KdeBuilder:
     def stds(self):
         return self.__stds
 
-    def create_heatmap(self, image_file: str, y_param='h', y_lims=None, x_label=None, y_label=None, plt_tittle=None,
-                       add_avg_std=False):
+    def create_plot(self, image_file: str, y_param='h', x_label=None, y_label=None, plt_tittle=None):
         """
         Метод, строящий график
         :param plt_tittle:
@@ -118,22 +131,45 @@ class KdeBuilder:
         ax[1].plot(aggregates['y'], aggregates['average'], label='average')
         ax[1].plot(aggregates['y'], aggregates['possible'], label='possible')
 
-        _VAL_NAMES_BY_PARAM = {
-            'T': 'Temperature, K',
-            'M': 'Ln(M) * 10^14 см^(-3)'
-        }
-        _Y_NAMES_BY_PARAM = {
-            'h': 'Высота, км',
-            'latitude': 'Широта, deg',
-            'month': 'Месяц',
-            'sza': 'Зенитный угол, deg',
-            'f107': 'f107'
-        }
         ax[0].set_xlabel(_VAL_NAMES_BY_PARAM[self.__param[0]] if not x_label else x_label)
         ax[0].set_ylabel(_Y_NAMES_BY_PARAM[y_param] if not y_label else y_label)
         ax[1].set_xlabel(_Y_NAMES_BY_PARAM[y_param] if not y_label else y_label)
         ax[1].set_ylabel(_VAL_NAMES_BY_PARAM[self.__param[0]] if not x_label else x_label)
 
+        plt.grid()
+        plt.legend()
+
+        plt.savefig(image_file, bbox_inches='tight', dpi=100)
+        plt.close()
+
+    def create_compare_plot(self, datafile, image_file):
+        msis_df = pd.read_csv(datafile,
+                              names=['h', 'N2', 'O2', 'T'],
+                              dtype={'h': float, 'N2': float, 'O2': float, 'T': float})
+        msis_df['M'] = np.log((msis_df['N2'] + msis_df['O2']) * 10 ** (-14))
+        obs_dataset = self.__generate_obs('h')
+        logging.info(obs_dataset)
+        counts_dataset = ps.sqldf("select y, value, cast(count(*) as float) as cnt from obs_dataset "
+                                  "group by y, value")
+        logging.info(counts_dataset)
+        max_counts = counts_dataset.groupby("y").max()
+        aggregates = ps.sqldf("select obs.y, avg(obs.value) as average, avg(pos.value) as possible "
+                              "from obs_dataset obs "
+                              "inner join ("
+                              "    select mc.y, cd.value from max_counts mc "
+                              "    inner join counts_dataset cd "
+                              "    on mc.y = cd.y and mc.cnt = cd.cnt) pos "
+                              "on obs.y = pos.y "
+                              "group by obs.y "
+                              "order by obs.y ")
+        logging.info(max_counts)
+
+        plt.plot(aggregates['y'], aggregates['average'], label='average')
+        plt.plot(aggregates['y'], aggregates['possible'], label='possible')
+        plt.plot(msis_df['h'], msis_df[self.__param], label='MSIS')
+        plt.title(f'{self.__param} \n {self.__options} \n {self.obs_count} observations')
+        plt.xlabel('h, км')
+        plt.ylabel(_VAL_NAMES_BY_PARAM[self.__param])
         plt.grid()
         plt.legend()
 
