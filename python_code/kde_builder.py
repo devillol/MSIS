@@ -147,7 +147,7 @@ class KdeBuilder:
         msis_df = pd.read_csv(datafile,
                               names=['h', 'N2', 'O2', 'T'],
                               dtype={'h': float, 'N2': float, 'O2': float, 'T': float})
-        msis_df['M'] = np.log10((msis_df['N2'] + msis_df['O2']) * 10 ** (-14))
+        msis_df['M'] = np.log10((msis_df['N2'] + msis_df['O2']))
         obs_dataset = self.__generate_obs('h')
         logging.info(obs_dataset)
         counts_dataset = ps.sqldf("select y, value, cast(count(*) as float) as cnt from obs_dataset "
