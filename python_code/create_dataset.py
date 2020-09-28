@@ -44,8 +44,8 @@ def create_dataset(mat_file: str, param: str, sql_file_path: str, **kwargs) -> D
         summary = summary.join(P).dropna()
         logging.info(summary)
         for t, m in zip(_T_NAMES, _M_NAMES):
-            summary[m] = np.log(
-                summary[m] / (summary[t] * cs.k) * 10 ** (-6) * 10 ** (-14))
+            summary[m] = np.log10(
+                summary[m] / (summary[t] * cs.k) * 10 ** (-6))
         logging.info(summary)
 
     with open(sql_file_path, 'r') as sql_file:
