@@ -115,7 +115,8 @@ class KdeBuilder:
             'width_ratios': [2, 1]})
         fig.set_size_inches(20, 10)
 
-        __param_tittle = f'{self.__param[0]} на высоте h = {self.__param[1:]} км' if len(self.__param) > 1 else self.__param
+        __param_tittle = f'{self.__param[0]} на высоте h = {self.__param[1:]} км' if len(
+            self.__param) > 1 else self.__param
 
         fig.suptitle(f'{__param_tittle} \n {self.__options} \n {self.obs_count} observations'
                      if not plt_tittle else f'{plt_tittle} \n {self.obs_count} observations', fontsize=20)
@@ -131,8 +132,17 @@ class KdeBuilder:
         ax[1].set_xlabel(_Y_NAMES_BY_PARAM[y_param] if not y_label else y_label)
         ax[1].set_ylabel(_VAL_NAMES_BY_PARAM[self.__param[0]] if not x_label else x_label)
 
-        plt.grid()
-        plt.legend()
+        ax[1].minorticks_on()
+
+        #  Определяем внешний вид линий основной сетки:
+        ax[1].grid(which='major',
+                   color='k')
+
+        #  Определяем внешний вид линий вспомогательной
+        #  сетки:
+        ax[1].grid(which='minor',
+                   color='k',
+                   linestyle=':')
 
         plt.savefig(image_file, bbox_inches='tight', dpi=100)
         plt.close()
@@ -171,7 +181,17 @@ class KdeBuilder:
         plt.title(f'{self.__param} \n {self.__options} \n {self.obs_count} observations')
         plt.xlabel('h, км')
         plt.ylabel(_VAL_NAMES_BY_PARAM[self.__param])
-        plt.grid()
+        plt.minorticks_on()
+
+        #  Определяем внешний вид линий основной сетки:
+        plt.grid(which='major',
+                   color='k')
+
+        #  Определяем внешний вид линий вспомогательной
+        #  сетки:
+        plt.grid(which='minor',
+                   color='k',
+                   linestyle=':')
         plt.legend()
 
         plt.savefig(image_file, bbox_inches='tight', dpi=100)
