@@ -18,9 +18,9 @@ def check_param(param: str):
 def create_dataset(mat_file: str, param: str, sql_file_path: str, **kwargs) -> DataFrame:
     """
     Функция, генерирующая из .mat-файла датафрэйм для параметра, отбирая записи по условию
-    :param sql_file_path:
     :param mat_file: путь к .mat файлу
-    :param param: какой параметр считаем (Temperature или M)
+    :param param: какой параметр считаем (T или M)
+    :param sql_file_path: путь к sql файлу
     :return: DataFrame
     """
     check_param(param)

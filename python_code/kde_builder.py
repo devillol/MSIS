@@ -77,14 +77,9 @@ class KdeBuilder:
 
     def create_plot(self, image_file: str, y_param='h', x_label=None, y_label=None, plt_tittle=None):
         """
-        Метод, строящий график
-        :param plt_tittle:
-        :param y_param:
-        :param y_lims:
-        :param add_avg_std:
+        Метод, строящий график распределения плотности вероятности и график  зависимости средних и вероятных
+        величин от y_param
         :param image_file: куда сохранять файл
-        :param x_label: подпись оси x
-        :param y_label: подпись оси y
         :return:
         """
         obs_dataset = self.__generate_obs(y_param)
@@ -143,6 +138,12 @@ class KdeBuilder:
         plt.close()
 
     def create_compare_plot(self, datafile, image_file):
+        """
+        Построение зависимостей от h среднего значения, наиболее вероятного и значения из модели MSIS
+        :param datafile: файл с данными MSIS
+        :param image_file: куда сохранять
+        :return:
+        """
         msis_df = pd.read_csv(datafile,
                               names=['h', 'N2', 'O2', 'T'],
                               dtype={'h': float, 'N2': float, 'O2': float, 'T': float})
