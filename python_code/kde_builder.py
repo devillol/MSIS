@@ -143,6 +143,7 @@ class KdeBuilder:
         ax[1].grid(which='minor',
                    color='k',
                    linestyle=':')
+        plt.legend()
 
         plt.savefig(image_file, bbox_inches='tight', dpi=100)
         plt.close()
